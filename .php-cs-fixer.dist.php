@@ -16,7 +16,8 @@ return (new Config())
             // 💡 root folder to check
             ->in(__DIR__)
             ->exclude([
-                'bootstrap/cache'
+                'bootstrap/cache',
+                'containers'
             ])
 
 
