@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Marketplace\Cart\Core\Domain\Entities;
 
-readonly class ProductCart
+readonly class CartProduct
 {
     public function __construct(
         public int    $id,

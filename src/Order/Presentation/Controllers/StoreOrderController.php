@@ -2,28 +2,29 @@
 
 declare(strict_types=1);
 
-namespace Marketplace\Cart\Presentation\Controllers;
+namespace Marketplace\Order\Presentation\Controllers;
 
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\Request;
-use Marketplace\Cart\Core\Application\Actions\PayCartAction;
-use Marketplace\Cart\Core\Application\Exception\CantPayCartException;
-use Marketplace\Cart\Presentation\Response\SuccessResponse;
+use Marketplace\Order\Core\Application\Actions\CreateOrderAction;
+use Marketplace\Order\Core\Application\Exceptions\EmptyCartException;
+use Marketplace\Order\Core\Application\Exceptions\OrderExistException;
+use Marketplace\Order\Presentation\Response\SuccessResponse;
 use OpenApi\Attributes as OA;
 
-#[OA\Tag(name: 'Cart')]
-class PayCartController
+#[OA\Tag(name: 'Order')]
+final readonly class StoreOrderController
 {
     public function __construct(
-        private PayCartAction $payCartAction
+        private CreateOrderAction $createOrderAction,
     ) {}
 
     #[OA\Post(
-        path: '/api/carts/pay/{paymentMethodId}',
-        operationId: 'payCart',
-        tags: ['Cart'],
-        summary: 'Оплата корзины',
-        description: 'Создаёт заказ из содержимого корзины, генерирует платёжную ссылку выбранного способа оплаты и очищает корзину.',
+        path: '/api/orders/pay/{paymentMethodId}',
+        operationId: 'createOrder',
+        tags: ['Order'],
+        summary: 'Создание заказа из корзины',
+        description: 'Создаёт заказ из содержимого корзины пользователя, генерирует платёжную ссылку выбранного способа оплаты и очищает корзину.',
         security: [
             ['sanctum' => []],
         ],
@@ -44,6 +45,15 @@ class PayCartController
                     properties: [
                         new OA\Property(property: 'status', type: 'string', example: 'success'),
                         new OA\Property(property: 'data', type: 'object', nullable: true),
+                    ],
+                ),
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Предыдущий заказ не оплачен или корзина пуста',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Last order is not payed'),
                     ],
                 ),
             ),
@@ -76,14 +86,10 @@ class PayCartController
         }
 
         try {
-            $this->payCartAction->run(
-                $user->id,
-                $paymentMethodId,
-            );
-        } catch (CantPayCartException $e) {
-            abort(400);
+            $this->createOrderAction->run($user->id, $paymentMethodId);
+        } catch (OrderExistException|EmptyCartException $e) {
+            abort(400, $e->getMessage());
         }
-
 
         return new SuccessResponse();
     }

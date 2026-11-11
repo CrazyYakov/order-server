@@ -6,8 +6,7 @@ namespace Marketplace\Cart\Presentation\View;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
-use Marketplace\Cart\Core\Domain\Entities\ProductCart;
-use Marketplace\Cart\Core\Domain\Values\List\ProductInCartList;
+use Marketplace\Cart\Core\Domain\Entities\CartProduct;
 
 /**
  * @implements Arrayable<string, mixed>
@@ -15,12 +14,12 @@ use Marketplace\Cart\Core\Domain\Values\List\ProductInCartList;
 class ProductInCartListView implements Arrayable
 {
     public function __construct(
-        private ProductInCartList $productInCartList
+        private iterable $productInCartList
     ) {}
 
     public function toArray(): array
     {
-        return Arr::map(iterator_to_array($this->productInCartList), function (ProductCart $productCart) {
+        return Arr::map(iterator_to_array($this->productInCartList), function (CartProduct $productCart) {
             return [
                 'id' => $productCart->id,
                 'title' => $productCart->title,

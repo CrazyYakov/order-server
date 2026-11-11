@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Marketplace\Cart\Core\Domain\Aggregates;
 
-use Marketplace\Cart\Core\Domain\Values\List\ProductInCartList;
+use Marketplace\Cart\Core\Domain\Contracts\ProductCollection;
 
 readonly class Cart
 {
     public function __construct(
-        public ProductInCartList $productInCartList,
+        public ProductCollection $productCollection,
         public int $userId,
     ) {}
 }

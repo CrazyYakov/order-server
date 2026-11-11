@@ -7,6 +7,9 @@ namespace Marketplace\Cart\Presentation\Controllers;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\Request;
 use Marketplace\Cart\Core\Application\Actions\AddProductToCartAction;
+use Marketplace\Cart\Core\Application\Exception\CartNotFoundException;
+use Marketplace\Cart\Core\Application\Exception\InsufficientStockException;
+use Marketplace\Cart\Core\Application\Exception\ProductNotFoundException;
 use Marketplace\Cart\Presentation\Response\SuccessResponse;
 use OpenApi\Attributes as OA;
 
@@ -15,7 +18,8 @@ class StoreProductCartController
 {
     public function __construct(
         private AddProductToCartAction $action
-    ) {}
+    ) {
+    }
 
     #[OA\Post(
         path: '/api/carts/{id}',
@@ -68,13 +72,17 @@ class StoreProductCartController
     )]
     public function __invoke(Request $request, int $id): Responsable
     {
-        $user = $request->user();
+        try {
+            $user = $request->user();
 
-        if ($user === null) {
-            abort(401);
+            $this->action->run($user->id, $id);
+        } catch (ProductNotFoundException $e) {
+            abort(404, $e->getMessage());
+        } catch (CartNotFoundException $e) {
+            abort(500, $e->getMessage());
+        } catch (InsufficientStockException $e) {
+            abort(422, $e->getMessage());
         }
-
-        $this->action->run($user->id, $id);
 
         return new SuccessResponse();
     }

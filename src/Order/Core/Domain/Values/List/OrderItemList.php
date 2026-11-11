@@ -2,31 +2,33 @@
 
 declare(strict_types=1);
 
-namespace Marketplace\Cart\Core\Domain\Values\List;
+namespace Marketplace\Order\Core\Domain\Values\List;
 
+use Countable;
 use Iterator;
-use Marketplace\Product\Core\Domain\Entities\Product;
+use Marketplace\Order\Core\Domain\Values\OrderItem;
 
 /**
- * @implements Iterator<int, Product>
+ * @implements Iterator<int, OrderItem>
  */
-class ProductList implements Iterator
+final class OrderItemList implements Iterator, Countable
 {
-    /** @var array<int, Product> */
+    /** @var array<int, OrderItem> */
     private array $list;
+
     private int $position;
 
-    /** @param array<int, Product> $list */
+    /** @param array<int, OrderItem> $list */
     public function __construct(array $list)
     {
-        $this->list = $list;
+        $this->list = array_values($list);
         $this->position = 0;
     }
 
     /**
      * @inheritDoc
      */
-    public function current(): Product
+    public function current(): OrderItem
     {
         return $this->list[$this->position];
     }
@@ -61,5 +63,10 @@ class ProductList implements Iterator
     public function rewind(): void
     {
         $this->position = 0;
+    }
+
+    public function count(): int
+    {
+        return count($this->list);
     }
 }
