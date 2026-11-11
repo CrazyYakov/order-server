@@ -7,7 +7,6 @@ namespace Marketplace\Order\Presentation\Controllers;
 use Illuminate\Contracts\Support\Responsable;
 use Marketplace\Auth\Presentation\Response\SuccessResponse;
 use Marketplace\Order\Core\Ports\OrderRepositoryContract;
-use Marketplace\Order\Presentation\Resources\OrderResource;
 use Marketplace\Order\Presentation\View\OrderView;
 use OpenApi\Attributes as OA;
 

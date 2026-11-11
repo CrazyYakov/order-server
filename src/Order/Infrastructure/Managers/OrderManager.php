@@ -6,57 +6,52 @@ namespace Marketplace\Order\Infrastructure\Managers;
 
 use App\Models\Order as OrderModel;
 use App\Models\PaymentMethod;
-use App\Models\Product as ProductModel;
-use App\Models\User;
 use DateTimeInterface;
-use Marketplace\Cart\Core\Domain\Entities\Order;
+use Illuminate\Support\Facades\DB;
 use Marketplace\Order\Core\Domain\Values\Enums\OrderStatusEnum;
+use Marketplace\Order\Core\Domain\Values\List\OrderItemList;
 use Marketplace\Order\Core\Ports\OrderManagerContract;
 
 class OrderManager implements OrderManagerContract
 {
-    public function createOrder(int $userId, int $paymentMethodId): Order
+    public function create(int $userId, int $paymentMethodId, OrderItemList $items): int
     {
-        $order = new OrderModel();
-        $order->status = OrderStatusEnum::ON_PAYMENT;
-        $order->user_id = $userId;
-        $order->payment_method_id = $paymentMethodId;
-        $order->save();
+        return DB::transaction(function () use ($userId, $paymentMethodId, $items): int {
+            $order = new OrderModel();
+            $order->status = OrderStatusEnum::ON_PAYMENT;
+            $order->user_id = $userId;
+            $order->payment_method_id = $paymentMethodId;
+            $order->save();
 
-        $this->moveProductCartToOrder($userId, $order);
+            $this->syncOrderProducts($order, $items);
 
-        return new Order($order->id, $paymentMethodId);
+            return (int) $order->getKey();
+        });
     }
 
-    public function generateUrl(Order $order): void
+    public function generateUrl(int $orderId): void
     {
-        $orderModel = OrderModel::findOrFail($order->id);
+        $orderModel = OrderModel::findOrFail($orderId);
 
-        $orderModel->url = PaymentMethod::findOrFail($order->paymentMethodId)
+        $orderModel->url = PaymentMethod::findOrFail($orderModel->payment_method_id)
             ->getClass()
-            ->generateUrlForOrder($order->id);
+            ->generateUrlForOrder($orderId);
 
         $orderModel->save();
     }
 
-    private function moveProductCartToOrder(int $userId, OrderModel $order): void
+    private function syncOrderProducts(OrderModel $order, OrderItemList $items): void
     {
-        $user = User::findOrFail($userId);
+        $products = [];
 
-        $order->products()
-            ->sync(
-                $user->cart
-                    ->products
-                    ->keyBy('id')
-                    ->map(function (ProductModel $product) {
-                        assert($product->productInCart !== null);
+        foreach ($items as $item) {
+            $products[$item->productId] = [
+                'price' => $item->price,
+                'count' => $item->count,
+            ];
+        }
 
-                        return [
-                            'price' => $product->productInCart->price,
-                            'count' => $product->productInCart->count,
-                        ];
-                    })
-            );
+        $order->products()->sync($products);
     }
 
     public function updateStatus(int $orderId, OrderStatusEnum $status): void

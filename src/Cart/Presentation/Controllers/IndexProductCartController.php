@@ -7,8 +7,9 @@ namespace Marketplace\Cart\Presentation\Controllers;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\Request;
 use Marketplace\Cart\Core\Ports\CartRepositoryContract;
-use Marketplace\Cart\Presentation\Response\SuccessResponse;
+use Marketplace\Shared\Presentation\Responses\SuccessResponse;
 use Marketplace\Cart\Presentation\View\ProductInCartListView;
+use Marketplace\Shared\Presentation\Responses\JsonResponse;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: 'Cart')]
@@ -72,7 +73,7 @@ class IndexProductCartController
         $cart = $this->cartRepository->getCartByUser($user->id);
 
         return new SuccessResponse(
-            new ProductInCartListView($cart->productInCartList)
+            new ProductInCartListView($cart->productCollection)
         );
     }
 }
