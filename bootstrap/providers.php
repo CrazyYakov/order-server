@@ -7,4 +7,5 @@ return [
     Marketplace\Order\Infrastructure\Providers\OrderServiceProvider::class,
     Marketplace\Cart\Infrastructure\Providers\ProfileServiceProvider::class,
     Marketplace\Payment\Infrastructure\Providers\PaymentServiceProvider::class,
+    Marketplace\Shared\Provider\SharedProvider::class,
 ];
